@@ -76,7 +76,7 @@ def run_rr():
     comm = synergia.utils.parallel_utils.Commxx()
 
     # Initiate Random Distribution with specified seed
-    dist = synergia.foundation.Random_distribution(seed, comm)
+    dist = synergia.foundation.Random_distribution(seed, comm.get_rank())
 
     # Populate bunches with the random 6D distribution
     # Populate according to means and covariance parameters
