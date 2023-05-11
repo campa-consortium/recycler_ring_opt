@@ -1,5 +1,6 @@
-import numpy as np
 import re
+
+import numpy as np
 
 # get focussing and defocussing trim quads in the 600 section
 # for adjusting tmunes.

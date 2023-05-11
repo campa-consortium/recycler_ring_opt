@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 
-import sys
 import os
 import re
-import synergia
+import sys
 
 # import mpi4py.MPI as MPI
 import numpy as np
-import rr_sextupoles
-import rrnova_qt60x
+import synergia
 import synergia.simulation as SIM
 
-
+import rr_sextupoles
+import rrnova_qt60x
 from rr_options import opts
 
 #####################################

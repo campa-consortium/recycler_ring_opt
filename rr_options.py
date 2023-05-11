@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from math import pi
+
 from synergia_workflow import options
 
 opts = options.Options("rr")

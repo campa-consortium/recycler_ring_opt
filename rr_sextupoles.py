@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import synergia
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
+import synergia
 
 # manipulate the chromaticity RR trim sextupole magnets
 
