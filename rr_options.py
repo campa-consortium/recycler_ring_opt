@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from math import pi
+
 from synergia_workflow import options
 
 opts = options.Options("rr")
@@ -39,18 +40,18 @@ opts.add("partpercell", 8, "macro particles per grid cell", int)
 # normalized geometric emittance of 19.09e-6 mm-mr at beta*gamma=9.4855
 # gives a beam spot with a half width of 14 mm at the ipm location with beta_x
 # is 51.67.
-opts.add("norm_emit",50e-6/5.99, "95% normalized horizontal and vertical emittance [pi m rad]", float)
+opts.add("norm_emit", 50e-6 / 5.99, "95% normalized horizontal and vertical emittance [pi m rad]", float)
 opts.add("stdz", 0.001, "RMS longitudinal length [m]", float)
-#opts.add("rf_voltage", 0.08, "RF cavity voltage in MV", float)
+# opts.add("rf_voltage", 0.08, "RF cavity voltage in MV", float)
 opts.add("rf_voltage", 0.0, "RF cavity voltage in MV", float)
 
 # with RF on, buckets should be periodic
 opts.add("periodic", True, "Enforce longitudinal bucket periodicity", bool)
 
 opts.add("x_offset", 0.0, "Bunch offset in x", float)
-#opts.add("xp_offset, 0.0, "Bunch momentum in x", float)
+# opts.add("xp_offset, 0.0, "Bunch momentum in x", float)
 opts.add("y_offset", 0.0, "Bunch offset in y", float)
-#opts.add("yp_offset, 0.0, "Bunch momentum in y", float)
+# opts.add("yp_offset, 0.0, "Bunch momentum in y", float)
 opts.add("z_offset", 0.0, "Bunch offset in z", float)
 opts.add("start_energy", None, "Start energy", float)
 
@@ -65,7 +66,12 @@ opts.add("comm_group_size", 1, "Communication group size for space charge solver
 opts.add("solver", "rectangular", "which space charge solver to use", str)
 # if spacecharge is off, we can either use the splitoperator stepper with
 # a dummy collective, or an independent stepper
-opts.add("stepper", "splitoperator", "the stepper to use with no space charge sither independent, elements, or splitoperator", str)
+opts.add(
+    "stepper",
+    "splitoperator",
+    "the stepper to use with no space charge sither independent, elements, or splitoperator",
+    str,
+)
 
 # impedance options
 opts.add("impedance", True, "activate impedance")
@@ -73,11 +79,11 @@ opts.add("wake_file", "Wakes_MI.dat", "data file for wake(impedance) calculation
 opts.add("wake_grid", 1000, "grid for intrabunch wake calculation")
 opts.add("wave_number", [0, 0, 0], "wave number for multibunch instability")
 opts.add("wake_turns", 1, "number of turns to consider for wake")
-opts.add("wake_type","XZ_Elliptical_coeff", "type of wake to apply")
+opts.add("wake_type", "XZ_Elliptical_coeff", "type of wake to apply")
 opts.add("full_machine", False, "consider every bucket occupied")
 
 # options for whether to add multipole fields
-#opts.add("add_multipoles", True, "Add multipole fields", bool)
+# opts.add("add_multipoles", True, "Add multipole fields", bool)
 
 # lambertson aperture option
 opts.add("lam52", False, "Apply aperture at lam52 elements", bool)
@@ -103,5 +109,5 @@ opts.add("add_multipoles", True, "add multipoles", bool)
 
 opts.add("lattice_simplify", True, "apply lattice simplification", bool)
 opts.add("scratch", None, "directory for temporary diagnostic files", str)
-#job_mgr = synergia_workflow.Job_manager("mi_multibunch.py", opts, ["mi20-egs-thinrf.lat","multipoles.npy","mi_orbit_bumps.py","mi_ila_aperture.py","read_bunch.py", "Wakes_MI.dat"])
-#job_mgr = synergia_workflow.Job_manager("mi.py", opts, ["mi20.lsx", "covars.txt"])
+# job_mgr = synergia_workflow.Job_manager("mi_multibunch.py", opts, ["mi20-egs-thinrf.lat","multipoles.npy","mi_orbit_bumps.py","mi_ila_aperture.py","read_bunch.py", "Wakes_MI.dat"])
+# job_mgr = synergia_workflow.Job_manager("mi.py", opts, ["mi20.lsx", "covars.txt"])
