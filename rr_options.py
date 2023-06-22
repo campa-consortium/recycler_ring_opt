@@ -97,8 +97,12 @@ opts.add("gridy", 32, "size of transverse grid for solver", int)
 opts.add("gridz", 128, "size of longitudinal grid for solver", int)
 
 # tune adjustments
-opts.add("xtune_adjust", 0.38210, "adjust x tune", float)
-opts.add("ytune_adjust", 0.44260, "adjust y tune", float)
+#opts.add("xtune_adjust", 0.38210, "adjust x tune", float)
+#opts.add("ytune_adjust", 0.44260, "adjust y tune", float)
+# These starting tunes come from the file tunefreq_fine.txt and are the values
+# at 0 frequency offset
+opts.add("xtune_adjust", 0.4126, "adjust x tune", float)
+opts.add("ytune_adjust", 0.3560, "adjust y tune", float)
 
 # chromaticity adjustments
 opts.add("xchrom_adjust", None, "adjust x chromaticity", float)
@@ -111,3 +115,8 @@ opts.add("lattice_simplify", True, "apply lattice simplification", bool)
 opts.add("scratch", None, "directory for temporary diagnostic files", str)
 # job_mgr = synergia_workflow.Job_manager("mi_multibunch.py", opts, ["mi20-egs-thinrf.lat","multipoles.npy","mi_orbit_bumps.py","mi_ila_aperture.py","read_bunch.py", "Wakes_MI.dat"])
 # job_mgr = synergia_workflow.Job_manager("mi.py", opts, ["mi20.lsx", "covars.txt"])
+
+# tune survey options
+opts.add("min_freq_offset", -2000, "minimum frequency offset (MHz)")
+opts.add("max_freq_offset", 2000, "maximum frequency offset (MHz)")
+opts.add("freq_offset_step", 100, "step size between frequency measurements")
