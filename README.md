@@ -1,9 +1,5 @@
 # recycler_ring_opt
 
-Run with the following command:
-
-`python rr_noSC.py`
-
 ## To produce a template from a working lattice file:
 By default, assumes the user wants to tweak K1L, K2L, K3L, and K4L for all ```MPS*U``` elements, separately for even and odd ones. 
 
@@ -25,6 +21,25 @@ optional arguments:
                         String pattern to match. (default: "MPS*U")
   --split-by-parity SPLIT_BY_PARITY
                         Split elements even/odd. (default: True)
+```
+## Generate a lattice file with a given set of parameters, from a template lattice file
+``` 
+$ python3.9 GenerateLatticeFile.py --help                                                                                 
+usage: GenerateLatticeFile.py [-h] [-v] [--params PARAMS] [--outfilename OUTFILENAME] TemplateFileIn
+
+Create a lattice file from a template.
+
+positional arguments:
+  TemplateFileIn        Required input file path.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --debug           Verbose debugging output. (default:False)
+  --params PARAMS       comma-separated TOKEN:values pairs, e.g. REPLACEME_K1LEVEN:0.01,REPLACEME_K1ODDD:-0.23
+  --outfilename OUTFILENAME
+                        Output file name. (default= Built from input param choices,)
+
+
 ```
 
 ## rr_tune_survey.py runs the Recycler ring simulation.
