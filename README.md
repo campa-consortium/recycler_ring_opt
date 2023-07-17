@@ -1,7 +1,7 @@
 # recycler_ring_opt
 
 ## To produce a template from a working lattice file:
-By default, assumes the user wants to tweak K1L, K2L, K3L, and K4L for all ```MPS*U``` elements, separately for even and odd ones. 
+By default, assumes the user wants to tweak K0L, K1L, K2L, and K3L for all physical ```MPS*U``` elements, separately for even and odd ones, and creates a set of eight MAD parameters accordingly. A list of nonphysical elements is hard-coded to be copied untouched into the template file as ```skipthese```. A set of initial values for these eight new MAD paramaeters is also hard-coded.
 
 ```
 $ python3.9 templatize_latticefile.py --help                  
