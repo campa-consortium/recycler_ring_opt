@@ -11,7 +11,8 @@ import synergia.simulation as SIM
 
 import rr_sextupoles
 import rrnova_qt60x
-from rr_options import opts
+
+#from rr_options import opts
 
 #####################################
 
@@ -42,12 +43,9 @@ def convert_rbends_to_sbends(orig_lattice):
     for elem in orig_lattice.get_elements():
         if elem.get_type_name() == "rbend":
             new_elem = synergia.lattice.Lattice_element("sbend", elem.get_name())
-            s_attributes = elem.get_string_attributes()
-            d_attributes = elem.get_double_attributes()
-            for s in s_attributes.keys():
-                new_elem.set_string_attribute(s, s_attributes[s])
-            for d in d_attributes.keys():
-                new_elem.set_double_attribute(d, d_attributes[d])
+
+            new_elem.copy_attributes_from(elem)
+
             ang = elem.get_double_attribute("angle")
             length = elem.get_double_attribute("l")
             arclength = ang * length / (2.0 * np.sin(ang / 2.0))
@@ -73,7 +71,63 @@ def keep_qt(lattice):
     return lattice
 
 
+# Reorder the lattice if needed
+def reorder_lattice(lattice, start_element=None):
+    if start_element:
+        new_lattice = synergia.lattice.Lattice("mi", lattice.get_element_adaptor_sptr())
+
+        elements = lattice.get_elements()
+        names = [e.get_name() for i in elements]
+        if opts.start_element not in names:
+            raise RuntimeError("start element "+opts.start_element+" not in lattice")
+
+        start_i = names.index(start_element)
+        reorder_alements = elements[start_i:] + elements[0:start_i]
+
+        for elem in reorder_elements:
+            new_lattice.append(elem)
+
+        new_lattice.set_design_reference_particle(lattice.get_design_reference_particle())
+        new_lattice.set_reference_particle(lattice.get_reference_particle())
+
+        return new_lattice
+    else:
+        return lattice
+
+#----------------------------------------------------------------------------------
+
+# lattice is input lattice
+# rf_voltage is total RF voltage to distribute over all the cavities
+# harmno is the harmonic number
+# modifies elements in lattice in-place
+
+def setup_rf_cavities(lattice, rf_voltage, harmno):
+
+    # rf cavity voltage, is 1.0 MV total distributed over 18 cavities.  MAD8
+    # expects cavities voltages in  units of MV. First count how many cavities
+    # there are
+    num_cavities = 0
+    for elem in lattice.get_elements():
+        if elem.get_type() == synergia.lattice.element_type.rfcavity:
+            num_cavities = num_cavities + 1
+
+    if num_cavities < 1:
+        raise RuntimeError("error: set_rf_cavities: no RF cavities found")
+
+    # Now set the voltage and harmonic number. Frequency will be set
+    # later when the lattice is "tuned".
+    for elem in lattice.get_elements():
+            # set the harmonic number so the frequency is set
+            elem.set_double_attribute("harmon", harmno)
+            elem.set_double_attribute("volt", rf_voltage/num_cavities)
+
+    return
+
+#----------------------------------------------------------------------------------
+
 def setup():
+    raise RuntimeError("Do not call setup anymore, call individual setup routines!")
+
     try:
         logger = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.DEBUG)
 

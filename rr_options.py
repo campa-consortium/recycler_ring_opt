@@ -32,7 +32,7 @@ opts.add("septa_dump", False, "whether to dump particles hitting the septa", boo
 opts.add("septa_period", 1, "period between septa particle dump", int)
 opts.add("step_full2", False, "Whether to do full2 diagnostics each step", bool)
 opts.add("steps", 416, "Number of steps per turn", int)
-opts.add("turns", 2047, "Number of turns total", int)
+opts.add("turns", 2000, "Number of turns total", int)
 opts.add("max_turns", 2048, "Maximum number of turns this run", int)
 opts.add("map_order", 5, "Map order", int)
 opts.add("quad_maps", False, "Use MAPS for quadrupoles", bool)

@@ -16,6 +16,41 @@ def print_statistics(bunch):
     print("mean = {}".format(mean))
     print("std = {}".format(std))
 
+# Use the template RR lattice and passed in values for kxL moments
+# to construct the lattice for determining tunes vs. momentum
+
+def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
+    with open(RR_template, 'r') as template:
+        template = template.read()
+
+    # Values for K0LEVEN and K0L_ODD are set to 0 in the template itself.
+    k1leven = kxl_values.get('k1l_even', 0)
+    k1lodd = kxl_values.get('k1l_odd', 0)
+    k2leven = kxl_values.get('k2l_even', 0)
+    k2lodd = kxl_values.get('k2l_odd', 0)
+    k3leven = kxl_values.get('k3l_even', 0)
+    k3lodd = kxl_values.get('k3l_odd', 0)
+
+    header = ""
+    header = header + "VALUEFOR_K1LEVEN := {:22g}\n".format(k1leven)
+    header = header + "VALUEFOR_K1L_ODD := {:22g}\n".format(k1lodd)
+
+    header = header + "VALUEFOR_K2LEVEN := {:22g}\n".format(k2leven)
+    header = header + "VALUEFOR_K2L_ODD := {:22g}\n".format(k2lodd)
+
+    header = header + "VALUEFOR_K3LEVEN := {:22g}\n".format(k3leven)
+    header = header + "VALUEFOR_K3L_ODD := {:22g}\n".format(k3lodd)
+
+    rr_full = header+template
+
+    reader = synergia.lattice.Mad8_reader()
+    reader.parse_string(rr_full)
+
+    lattice = reader.get_lattice(RR_line)
+
+    return lattice
+
+#-----------------------------------------------------------------------
 
 def get_lattice_rr():
     lattice_file = open("rr_tuned.json", "r")
@@ -44,12 +79,13 @@ def get_dpop_offsets():
     dpop_list = df_list * revtime/(h*np.abs(eta))
     return dpop_list
 
-def run_rr():
-    screen = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.DEBUG)
+#-----------------------------------------------------------------------
 
-    # Run Recyler setup in order to tune lattice
-    # Run rr_setup to get covariance matrix in order to populate bunches
-    rr_setup.setup()
+# Create the simulator object for the simulation which characteristics
+# determined by the reference particle
+
+def create_simulator(lattice, screen):
+    ref_part = lattice.get_reference_particle()
 
     # We're only  going to propagate a small number of particles
     # each at a different momentum to determine their tunes so I
@@ -64,11 +100,10 @@ def run_rr():
 
     real_particles = 1.0e9     # propagating without space charge
     
-    spacing = 5.64526987439  # Bucket length calculated from synergia2
+    spacing = synergia.simulation.Lattice_simulator.get_bucket_length(lattice)
     num_bunches=1
 
     # Get tuned Recycler lattice and reference particle for lattice
-    lattice = get_lattice_rr()
     ref_part = lattice.get_reference_particle()
 
     # Initiate bunch simulator (For now single bunch)
@@ -77,7 +112,7 @@ def run_rr():
     )
 
     # Enforce longitudinal bucket conditions (Mandatory if RF is turned on)
-    sim.set_longitudinal_boundary(synergia.bunch.LongitudinalBoundary.periodic, spacing)
+    sim.set_longitudinal_boundary(synergia.bunch.LongitudinalBoundary.aperture, spacing)
 
     bunch = sim.get_bunch()
     bunch.checkout_particles()
@@ -92,9 +127,11 @@ def run_rr():
 
     bunch.checkin_particles()
 
-    # Initiate parallel communication protocol
-    comm = synergia.utils.parallel_utils.Commxx()
+    return sim
 
+#-----------------------------------------------------------------------
+
+def create_propagator(comm, lattice):
     # this next block shows propagation with space charge.
     # Define space-charge operator (For now no space charge)
     # steps = 416  # Number of steps to use for stepper (What does this mean?)
@@ -108,44 +145,70 @@ def run_rr():
     # Define propagator for simulations
     propagator = synergia.simulation.Propagator(lattice, stepper)
 
-    # Define diagnostics to run
+    return propagator
+
+#-----------------------------------------------------------------------
+
+# register the diagnostics needed to get the tune data
+# into the simulator which is passed in.
+
+def register_diagnostics(sim):
+# Define diagnostics to run
     # For now keep options to single bunch
 
-    # Track individual particles and save to individual files
-    part_track = macro_particles  # Number of particles to track
-    nturns_track = 1  # Number of turns between each tracking
     # we don't need no steenkin particles, we're only interested in tracks
+    # Track individual particles and save to individual files
+    #part_track = macro_particles  # Number of particles to track
+    #nturns_track = 1  # Number of turns between each tracking
     #diag_part = synergia.bunch.Diagnostics_particles("particles.h5", part_track)
-    #sim.reg_diag_per_turn(diag_part, period=nturns_track)
-
+    # bunch statistics aren't useful for this purpose so we skip them
     # Get mean diagnostics for single bunch at every turn
-    diag = synergia.bunch.Diagnostics_full2("diag.h5")
-    sim.reg_diag_per_turn(diag)
+    #diag = synergia.bunch.Diagnostics_full2("diag.h5")
+    #sim.reg_diag_per_turn(diag)
 
     # Save tracking data for all 41 particles
-    diagtrk = synergia.bunch.Diagnostics_bulk_track("tracks.h5", macro_particles)
+    npart = sim.get_bunch().size()
+    diagtrk = synergia.bunch.Diagnostics_bulk_track("tracks.h5", npart)
     sim.reg_diag_per_turn(diagtrk)
 
+    return sim
+
+#-----------------------------------------------------------------------
+
+# run a set of off-momentum particles for 2000 turns through the lattice
+# previously set up.
+
+def run_rr(lattice, turns):
+
+    screen = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.DEBUG)
+
+    sim = create_simulator(lattice, screen)
+
+    # Initiate parallel communication protocol
+    comm = synergia.utils.parallel_utils.Commxx()
+
+    propagator = create_propagator(comm, lattice)
+
+    register_diagnostics(sim)
+        
     # Set maximum number of turns to simulate
-    max_turns = 2000
-    sim.set_max_turns(max_turns)
+    max_turns = turns
+    sim.set_max_turns(turns)
 
     # Define logs and screens to print out alarms and logs
     simlog = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.INFO_TURN)
-    screen = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.DEBUG)
+    #simlog = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.INFO)
 
     # Propagate simulation for certain number of turns
-    turns = 2000
     propagator.propagate(sim, simlog, turns)
 
-    # Print simple timer
-    synergia.utils.parallel_utils.simple_timer_print(screen)
 
+#-----------------------------------------------------------------------
 
 def main():
     print("Running Recycler Ring Simulation (No Space Charge)")
     run_rr()
 
 
-# Run simulation
-main()
+if __name__ == "__main__":
+    main()
