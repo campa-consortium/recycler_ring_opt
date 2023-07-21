@@ -5,7 +5,6 @@ import synergia
 import rr_tune_survey
 import rr_setup
 from rr_options import opts
-import rrnova_qt60x
 
 RR_template_file = "RR2020V0922_TEMPLATE_fixed"
 #RR_template_file = "RR2020V0922FLAT_fixed"
@@ -40,30 +39,8 @@ def generate_lattice(kxl_values):
     else:
         lattice_tmp2 = lattice_tmp1a
 
-    (xtune, ytune, cdt) = synergia.simulation.Lattice_simulator.calculate_tune_and_cdt(lattice_tmp2)
-
-    print('generate_lattice, initial xtune: ', xtune, ', ytune: ', ytune)
-
-    if opts.xtune_adjust or opts.ytune_adjust:
-        print("Adjusting tunes to:")
-        print("xtune: ", opts.xtune_adjust)
-        print("ytune: ", opts.ytune_adjust)
-
-        if opts.xtune_adjust:
-            delta_xtune = opts.xtune_adjust - xtune
-            print('delta_xtune: ', delta_xtune)
-        else:
-            delta_xtune = 0.0
-        if opts.ytune_adjust:
-            delta_ytune = opts.ytune_adjust - ytune
-            print('delta_ytune: ', delta_ytune)
-        else:
-            delta_ytune = 0.0
-
-        print('NOT adjusting rr60x quads')
-        #rrnova_qt60x.adjust_rr60_trim_quads(lattice_tmp2, delta_xtune, delta_ytune)
-
     lattice_tmp2.set_all_string_attribute("extractor_type", "libff")
+
 
     harmno = 588 # harmonic number
 
@@ -83,46 +60,36 @@ def save_lattice_txt(lattice, filename):
 
 #----------------------------------------------------------------------
 
-def run_particles(lattice):
-    # We're only  going to propagate a small number of particles
-    # each at a different momentum to determine their tunes so I
-    # don't really need the grid stuff.
-
-    rr_tune_survey.run_rr(lattice, opts.turns)
 
 #----------------------------------------------------------------------
 
-def evaluate(kxl_values, chatty=False):
+def evaluate(kxl_values):
 
     lattice = generate_lattice(kxl_values)
     
-    if chatty:
-        print("read lattice, ", len(lattice.get_elements()), ", length: ", lattice.get_length())
+    print("read lattice, ", len(lattice.get_elements()), ", length: ", lattice.get_length())
 
-        save_lattice_txt(lattice, 'rr_lattice.out')
+    (nux, nuy, cdT) = synergia.simulation.Lattice_simulator.calculate_tune_and_cdt(lattice)
+    print('tune x: ', nux)
+    print('tune y: ', nuy)
+    print('cdT: ', cdT)
+    print('T: ', cdT/synergia.foundation.pconstants.c)
 
-        (nux, nuy, cdT) = synergia.simulation.Lattice_simulator.calculate_tune_and_cdt(lattice)
-        print('tune x: ', nux)
-        print('tune y: ', nuy)
-        print('cdT: ', cdT)
-        print('T: ', cdT/synergia.foundation.pconstants.c)
+    chrom_t = synergia.simulation.Lattice_simulator.get_chromaticities(lattice)
 
-        chrom_t = synergia.simulation.Lattice_simulator.get_chromaticities(lattice)
+    print('horizontal chromaticity: ', chrom_t.horizontal_chromaticity)
+    print('vertical chromaticity: ', chrom_t.vertical_chromaticity)
+    print('compaction factor: ', chrom_t.momentum_compaction)
+    print('slip factor: ', chrom_t.slip_factor)
 
-        print('horizontal chromaticity: ', chrom_t.horizontal_chromaticity)
-        print('vertical chromaticity: ', chrom_t.vertical_chromaticity)
-        print('compaction factor: ', chrom_t.momentum_compaction)
-        print('slip factor: ', chrom_t.slip_factor)
-
-    run_particles(lattice)
-
-    #return analyze_propagation()
     return
 
 #----------------------------------------------------------------------
 
 # main() run evaluate() for representative set of KxL values
 def main():
+
+    # test unaltered lattice
     kxl_values = {
         'K1L_EVEN': 0.0112332575,
         'K1L_ODD': -0.00024562271,
@@ -132,10 +99,7 @@ def main():
         'K3L_ODD': -0.2137673
         }
 
-    #return evaluate(kxl_values, True)
-
-    # test unaltered lattice
-    return evaluate({})
+    return evaluate(kxl_values)
 
 #----------------------------------------------------------------------
 

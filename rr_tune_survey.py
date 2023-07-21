@@ -19,6 +19,8 @@ def print_statistics(bunch):
 # Use the template RR lattice and passed in values for kxL moments
 # to construct the lattice for determining tunes vs. momentum
 
+#-----------------------------------------------------------------------
+
 def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
     with open(RR_template, 'r') as template:
         template = template.read()
@@ -66,10 +68,19 @@ def get_dpop_offsets():
     # between -2000 and +2000 (Hz) at intevals of 100 Hz.
     
     # From Rob Ainsworth:
-    revtime=11.135e-6
+    #revtime=11.135e-6
+    revtime = 1.1134653259322681e-05
     h=588.
-    eta=-8.7e-3
+    eta = -0.0087165
     # dpop=df*revtime/h/np.abs(eta)
+
+    # d(1/T) = -(1/T) * (dt/T)
+    #        = -(1/T) * eta * (dp/p)
+    #
+    # f = h * (1/T)
+    # df = h * d(1/T) = h * (-1/T) * eta * (dp/p)
+    #
+    # dp/p = df * -T/(h * eta) 
 
     min_freq_off = opts.min_freq_offset
     max_freq_off = opts.max_freq_offset
