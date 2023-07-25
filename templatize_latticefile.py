@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import time
+import re
 from collections import Counter
 
 # parse arguments
@@ -32,10 +33,10 @@ skipthese = ['MPS100AU', 'MPS104BU', 'MPS106AU', 'MPS106BU', 'MPS108AU', 'MPS216
              'MPS641BU']
 
 intmoms = ['K0L', 'K1L', 'K2L', 'K3L']
-initial_vals = {'K0LEVEN':  0.0         , 'K0L_ODD':  0.0          ,
-                'K1LEVEN':  0.0112332575, 'K1L_ODD': -0.00024562271,
-                'K2LEVEN': -0.0050223296, 'K2L_ODD': -0.0331316105 ,
-                'K3LEVEN':  0.1297873   , 'K3L_ODD': -0.2137673    }
+initial_vals = {'K0L_EVEN':  0.0         , 'K0L_ODD':  0.0          ,
+                'K1L_EVEN':  0.0112332575, 'K1L_ODD': -0.00024562271,
+                'K2L_EVEN': -0.0050223296, 'K2L_ODD': -0.0331316105 ,
+                'K3L_EVEN':  0.1297873   , 'K3L_ODD': -0.2137673    }
 
 if __name__ == "__main__":
     # read arguments
@@ -84,8 +85,9 @@ if __name__ == "__main__":
 
                 # If the previous line was the final comment line, 
                 if thislineisacomment == False :
+                    outfile.write("! Set values for the variables to adjust multipole moments\n")
                     for intmomkey, intmomval in initial_vals.items():
-                        outfile.write(f'VALUEFOR_{intmomkey} := {intmomval}\n')
+                        outfile.write(f'!VALUEFOR_{intmomkey} := 0.0\n')
                 # Set for next loop around.
                 if thislineisacomment: lastlinewascomment = True
                 else: lastlinewascomment = False
@@ -99,55 +101,49 @@ if __name__ == "__main__":
                 outfile.write(jline+'\n')
                 continue
 
-            # Split the line on spaces, and the first one is where the MPS*U element name might be.
-            jparts = jline.split(' ')
-            primero = jparts[0]
-
-            # Skip lines that don't define a lattice element, which are always declared as "ELEMENTNAME: ...etc..."
-            if not primero[-1] == ':':
-                outfile.write(jline+'\n')
-                continue
-            # Elements which begin "MPS" and end "U:" only, please.
-            if not (primero[:3] == 'MPS' and primero[-2]=='U'):
-                outfile.write(jline+'\n')
-                continue
+            # this pattern matches strings like:
+            # MPS123AU: blahblay, K1L=plugh, K2L=xyzzy, K3L=fnord
+            # the three-digit element number, A or B,  and values of K1L, K2L, and K3L are captured as
+            # \1 \2 \3 \4 \5 \6.
             
+            mo = re.match(r"^MPS([1-6]\d\d)([AB])U: (.*), K1L=(.*), .*K2L=(.*), .*K3L=(.*)$", jline)
+
+            # if we didn't match, just pass the line through
+            if not mo:
+                outfile.write(jline+'\n')
+                continue
+
+            if mo:
+                if debug:
+                    print('Matched, line ', jline)
+                    print('group(1): ', mo.group(1))
+                    print('group(2): ', mo.group(2))
+                    print('group(3): ', mo.group(3))
+                    print('group(4): ', mo.group(4))
+                    print('group(5): ', mo.group(5))
+                    print('group(6): ', mo.group(5))
+
             # Extract the element number to handle even and odd elements separately
-            elem_digits = primero[3:6]
+            elem_digits = mo.group(1)
             parity = int(elem_digits)%2
 
             # Skip the nonphysical upstream multipole shims, wwhich are the 64 even + 66 odd ones in skipthese:
-            primero_no_colon = primero[:-1]
+            primero_no_colon = "MPS"+mo.group(1)+mo.group(2)+"U"
+            if debug: print("promero_no_colon: ", primero_no_colon)
             if primero_no_colon in skipthese:
                 outfile.write(jline+'\n')
                 if debug: print (f'Nonphysical: {jline}')
                 continue
 
-            # Keep a list of the primeros, and their lengths. If multiple name lengths are present, the assumptions above are in question!
-            elements_of_interest.append(primero)
-            element_name_lengths.append(len(primero))
-            parity_token = 'EVEN'
-            if parity > 0: parity_token = '_ODD'
-            
-            # Loop the parts of this line, replacing the value with an appropriate token
-            newparts = []
-            # How to catch and address the cases where certain moments are not in the original file
-            for jpart in jparts:
-                if jpart[:3] in intmoms: continue # We will replace these with tokens, even if not present in original file.
-                newparts.append(jpart)
-            # Ensure a final comma, to preceed our list of integrated moments
-            final_comma = list(newparts[-1])[-1]
-            if not final_comma == ',': newparts[-1] = newparts[-1]+'%'
-            for i, intmom in enumerate(intmoms):
-                token = 'VALUEFOR_'+intmom+parity_token
-            
-                if i+1 < len(intmoms): token+= ','
-                newparts.append(intmom+'='+token)
-            newline = ' '.join(newparts)
-            outfile.write(newline+'\n')
-        
-    if debug: print (f'Elements of interest: {len(elements_of_interest)}')
-    if debug: print (f'  and their name lengths: {Counter(sorted(element_name_lengths))}') 
-            
-
-        
+            if parity == 0:
+                # these are even parity multipoles
+                if debug: print('even parity')
+                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_EVEN, K2L=\5+VALUEFOR_K2L_EVEN, K3L=\6+VALUEFOR_K3L_EVEN")
+                if debug: print(outline)
+                outfile.write(outline+'\n')
+            else:
+                # these are even parity multipoles
+                if debug: print('odd parity')
+                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_ODD, K2L=\5+VALUEFOR_K2L_ODD, K3L=\6+VALUEFOR_K3L_ODD")
+                if debug: print(outline)
+                outfile.write(outline+'\n')

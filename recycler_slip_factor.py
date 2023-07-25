@@ -7,7 +7,9 @@ import rr_setup
 from rr_options import opts
 
 RR_template_file = "RR2020V0922_TEMPLATE_fixed"
+#RR_template_file = "RR2020V0922_TEMPLATE_wip"
 #RR_template_file = "RR2020V0922FLAT_fixed"
+
 RR_ring_name = "ring605_fodo"
 
 
@@ -98,6 +100,8 @@ def main():
         'K3L_EVEN': 0.1297873,
         'K3L_ODD': -0.2137673
         }
+
+    kxl_values = {}
 
     return evaluate(kxl_values)
 

@@ -34,16 +34,21 @@ def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
     k3lodd = kxl_values.get('k3l_odd', 0)
 
     header = ""
-    header = header + "VALUEFOR_K1LEVEN := {:22g}\n".format(k1leven)
+    header = header + "VALUEFOR_K1L_EVEN := {:22g}\n".format(k1leven)
     header = header + "VALUEFOR_K1L_ODD := {:22g}\n".format(k1lodd)
 
-    header = header + "VALUEFOR_K2LEVEN := {:22g}\n".format(k2leven)
+    header = header + "VALUEFOR_K2L_EVEN := {:22g}\n".format(k2leven)
     header = header + "VALUEFOR_K2L_ODD := {:22g}\n".format(k2lodd)
 
-    header = header + "VALUEFOR_K3LEVEN := {:22g}\n".format(k3leven)
+    header = header + "VALUEFOR_K3L_EVEN := {:22g}\n".format(k3leven)
     header = header + "VALUEFOR_K3L_ODD := {:22g}\n".format(k3lodd)
 
     rr_full = header+template
+
+    # For when I need to see what is being sent to the parser
+    # f = open('xyzzy.txt', 'w')
+    # f.write(rr_full)
+    # f.close()
 
     reader = synergia.lattice.Mad8_reader()
     reader.parse_string(rr_full)
