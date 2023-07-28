@@ -6,6 +6,9 @@ import rr_tune_survey
 import rr_setup
 from rr_options import opts
 import rrnova_qt60x
+import tune_suite
+import h5py
+import numpy as np
 
 RR_template_file = "RR2020V0922_TEMPLATE_fixed"
 #RR_template_file = "RR2020V0922FLAT_fixed"
@@ -60,8 +63,7 @@ def generate_lattice(kxl_values):
         else:
             delta_ytune = 0.0
 
-        print('NOT adjusting rr60x quads')
-        #rrnova_qt60x.adjust_rr60_trim_quads(lattice_tmp2, delta_xtune, delta_ytune)
+        rrnova_qt60x.adjust_rr60_trim_quads(lattice_tmp2, delta_xtune, delta_ytune)
 
     lattice_tmp2.set_all_string_attribute("extractor_type", "libff")
 
@@ -92,6 +94,22 @@ def run_particles(lattice):
 
 #----------------------------------------------------------------------
 
+# calculate the x and y tunes for each particle
+def analyze_propagation():
+    h5 = h5py.File('tracks.h5', 'r')
+    trks = h5.get('track_coords')[()]
+    npart = trks.shape[1]
+    xtunes = np.zeros(npart)
+    ytunes = np.zeros(npart)
+    for n in range(npart):
+        # calculate tunes this particle
+        t = tune_suite.interp_tunes(trks[:, n, 0:6].transpose())
+        xtunes[n] = t[0]
+        ytunes[n] = t[1]
+    return xtunes, ytunes
+
+#----------------------------------------------------------------------
+
 def evaluate(kxl_values, chatty=False):
 
     lattice = generate_lattice(kxl_values)
@@ -116,26 +134,28 @@ def evaluate(kxl_values, chatty=False):
 
     run_particles(lattice)
 
-    #return analyze_propagation()
-    return
+    return analyze_propagation()
 
 #----------------------------------------------------------------------
 
 # main() run evaluate() for representative set of KxL values
 def main():
-    kxl_values = {
-        'K1L_EVEN': 0.0112332575,
-        'K1L_ODD': -0.00024562271,
-        'K2L_EVEN': -0.0050223296,
-        'K2L_ODD': -0.0331316105,
-        'K3L_EVEN': 0.1297873,
-        'K3L_ODD': -0.2137673
+
+    # sample settings
+    #kxl_values = {} # this one uses the unmodified multipole settings
+                     # from the lattice file
+
+
+    kxl_values = {         # this one has slight changes
+        'K1L_EVEN': 0.01,
+        'K1L_ODD': -0.005,
+        'K2L_EVEN': -0.005,
+        'K2L_ODD': -0.00033,
+        'K3L_EVEN': 0.0000129,
+        'K3L_ODD': -0.0000333
         }
 
-    #return evaluate(kxl_values, True)
-
-    # test unaltered lattice
-    return evaluate({})
+    return evaluate(kxl_values, True)
 
 #----------------------------------------------------------------------
 

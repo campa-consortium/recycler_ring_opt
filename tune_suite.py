@@ -61,6 +61,8 @@ def interp_tunes(coords, search_range=((0.0,0.5),(0.0,0.5),(0.0,0.5))):
     f = np.arange(n,dtype='d')/n
     for pln in range(0,6,2):
         xt = abs(np.fft.fft(coords[pln, :]))
+        # cut off low end
+        xt[0:10] = 0.0
         locmax = np.argmax(xt[0:maxn])
         xtp = xt[locmax]
         if xt[locmax-1] > xt[locmax+1]:

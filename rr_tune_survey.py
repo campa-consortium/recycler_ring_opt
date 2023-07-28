@@ -21,6 +21,27 @@ def print_statistics(bunch):
 
 #-----------------------------------------------------------------------
 
+# Get the lattice functions, specifically the dispersion for seeding
+# the initial particle distribution
+
+def get_lf(lattice):
+    SIM = synergia.simulation
+    SIM.Lattice_simulator.CourantSnyderLatticeFunctions(lattice)
+    SIM.Lattice_simulator.calc_dispersions(lattice)
+    elem = lattice.get_elements()[-1]
+    return elem.lf
+        # arcLength.append(elem.lf.arcLength)
+        # beta_x.append(elem.lf.beta.hor)
+        # alpha_x.append(elem.lf.alpha.hor)
+        # psi_x.append(elem.lf.psi.hor)
+        # disp_x.append(elem.lf.dispersion.hor)
+        # beta_y.append(elem.lf.beta.ver)
+        # alpha_y.append(elem.lf.alpha.ver)
+        # psi_y.append(elem.lf.psi.ver)
+        # disp_y.append(elem.lf.dispersion.ver)
+    
+#-----------------------------------------------------------------------
+
 def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
     with open(RR_template, 'r') as template:
         template = template.read()
@@ -97,6 +118,43 @@ def get_dpop_offsets():
 
 #-----------------------------------------------------------------------
 
+def populate_bunch(bunch, lattice, np, screen):
+    dpop_offsets = get_dpop_offsets()
+    print('Number of frequencies to run: ', len(dpop_offsets), file=screen)
+    print('    offsets from ', dpop_offsets[0], 'to', dpop_offsets[-1], file=screen)
+
+    bunch.checkout_particles()
+
+    # get the lattice functions to populate the particles correctly
+    lf = get_lf(lattice)
+    Dx = lf.dispersion.hor
+    Dy = lf.dispersion.ver
+    Dpx = lf.dPrime.hor
+    Dpy = lf.dPrime.ver
+    
+    lp = bunch.get_particles_numpy()
+
+    # The total size of the array is padded for alignment so I limit the
+    # the index of particle number to match the size of dpop_offsets
+    lp[:np, 5] = dpop_offsets
+
+    # set the particles starting transverse coordinate offset by
+    # the amount determined by the dispersion*dpop offset.
+    lp[:np, 0] = Dx * dpop_offsets
+    lp[:np, 1] = Dpx * dpop_offsets
+    lp[:np, 2] = Dy * dpop_offsets
+    lp[:np, 3] = Dpy * dpop_offsets
+
+    # except for the particle at 0 which needs to have a small offset
+    # for tune detection
+    lp[20, 0] = 1.0e-7
+    lp[20, 2] = 1.0e-7
+
+    bunch.checkin_particles()
+
+    
+#-----------------------------------------------------------------------
+
 # Create the simulator object for the simulation which characteristics
 # determined by the reference particle
 
@@ -107,11 +165,7 @@ def create_simulator(lattice, screen):
     # each at a different momentum to determine their tunes so I
     # don't really need the grid stuff.
 
-    dpop_offsets = get_dpop_offsets()
-    print('Number of frequencies to run: ', len(dpop_offsets), file=screen)
-    print('    offsets from ', dpop_offsets[0], 'to', dpop_offsets[-1], file=screen)
-
-    macro_particles = len(dpop_offsets)
+    macro_particles = len(get_dpop_offsets())
     print("Number of macroparticles:", macro_particles, file=screen)
 
     real_particles = 1.0e9     # propagating without space charge
@@ -130,18 +184,8 @@ def create_simulator(lattice, screen):
     # Enforce longitudinal bucket conditions (Mandatory if RF is turned on)
     sim.set_longitudinal_boundary(synergia.bunch.LongitudinalBoundary.aperture, spacing)
 
-    bunch = sim.get_bunch()
-    bunch.checkout_particles()
-    lp = bunch.get_particles_numpy()
-    np = macro_particles
-    
-    # we can start all the particles at 0
-    lp[:, 0:5] = 0.0
-    # The total size of the array is padded for alignment so I limit the
-    # the index of particle number to match the size of dpop_offsets
-    lp[:np, 5] = dpop_offsets
+    populate_bunch(sim.get_bunch(), lattice, macro_particles, screen)
 
-    bunch.checkin_particles()
 
     return sim
 
@@ -199,6 +243,13 @@ def run_rr(lattice, turns):
     screen = synergia.utils.parallel_utils.Logger(0, synergia.utils.parallel_utils.LoggerV.DEBUG)
 
     sim = create_simulator(lattice, screen)
+
+    # turn off RF and set open longitudinal boundary conditions
+    # before propagating the particles
+
+    rr_setup.setup_rf_cavities(lattice, 0, 588)
+    (bdy, spacing) = sim.get_bunch().get_longitudinal_boundary()
+    sim.set_longitudinal_boundary(synergia.bunch.LongitudinalBoundary.open, spacing)
 
     # Initiate parallel communication protocol
     comm = synergia.utils.parallel_utils.Commxx()
