@@ -9,23 +9,23 @@ xtunes_target = Vals[:, 1]
 ytunes_target = Vals[:, 2]
 
 kxl_values = {
-    "K1L_EVEN": 0.01,
-    "K1L_ODD": -0.005,
-    "K2L_EVEN": -0.005,
-    "K2L_ODD": -0.00033,
-    "K3L_EVEN": 0.0000129,
-    "K3L_ODD": -0.0000333,
+    "k1l_even": 0.01,
+    "k1l_odd": -0.005,
+    "k2l_even": -0.005,
+    "k2l_odd": -0.00033,
+    "k3l_even": 0.0000129,
+    "k3l_odd": -0.0000333,
 }
 
 xtunes1, ytunes1 = evaluate.evaluate(kxl_values)
 
 kxl_values = {
-    "K1L_EVEN": 0.0,
-    "K1L_ODD": 0.0,
-    "K2L_EVEN": 0.0,
-    "K2L_ODD": 0.0,
-    "K3L_EVEN": 0.0,
-    "K3L_ODD": 0.0,
+    "k1l_even": 0.0,
+    "k1l_odd": 0.0,
+    "k2l_even": 0.0,
+    "k2l_odd": 0.0,
+    "k3l_even": 0.0,
+    "k3l_odd": 0.0,
 }
 
 xtunes2, ytunes2 = evaluate.evaluate(kxl_values)
