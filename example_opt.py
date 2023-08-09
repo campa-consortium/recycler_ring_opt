@@ -1,8 +1,13 @@
 import numpy as np
 import evaluate
 
+np.set_printoptions(precision=16)
 
-print(1, flush=True)
+
+Vals = np.loadtxt("tunefreq_fine.txt", skiprows=1, delimiter=",")
+xtunes_target = Vals[:, 1]
+ytunes_target = Vals[:, 2]
+
 kxl_values = {
     "K1L_EVEN": 0.01,
     "K1L_ODD": -0.005,
@@ -11,107 +16,19 @@ kxl_values = {
     "K3L_EVEN": 0.0000129,
     "K3L_ODD": -0.0000333,
 }
-print(2, flush=True)
 
-xtunes, ytunes = evaluate.evaluate(kxl_values)
+xtunes1, ytunes1 = evaluate.evaluate(kxl_values)
 
-print(3, flush=True)
+kxl_values = {
+    "K1L_EVEN": 0.0,
+    "K1L_ODD": 0.0,
+    "K2L_EVEN": 0.0,
+    "K2L_ODD": 0.0,
+    "K3L_EVEN": 0.0,
+    "K3L_ODD": 0.0,
+}
 
-print(xtunes, ytunes)
+xtunes2, ytunes2 = evaluate.evaluate(kxl_values)
 
-print(4, flush=True)
-
-xtunes_expected = np.array(
-    [
-        0.43633326,
-        0.43523356,
-        0.43411613,
-        0.43298387,
-        0.43183512,
-        0.43067082,
-        0.4294961,
-        0.42831135,
-        0.42711749,
-        0.42591224,
-        0.42469878,
-        0.42348164,
-        0.42226021,
-        0.42103296,
-        0.41980236,
-        0.41857286,
-        0.41734424,
-        0.41611508,
-        0.41488769,
-        0.41365023,
-        0.41245057,
-        0.41124038,
-        0.41003644,
-        0.40884542,
-        0.4076643,
-        0.40649495,
-        0.40533634,
-        0.404193,
-        0.40306638,
-        0.40194496,
-        0.40086651,
-        0.39979607,
-        0.39874633,
-        0.39771853,
-        0.39671478,
-        0.39573646,
-        0.39478457,
-        0.3938603,
-        0.39296507,
-        0.39210035,
-        0.39126802,
-    ]
-)
-
-ytunes_expected = np.array(
-    [
-        0.39027933,
-        0.38848626,
-        0.38670575,
-        0.38493946,
-        0.38318761,
-        0.38148277,
-        0.37971588,
-        0.37799436,
-        0.37628517,
-        0.37458575,
-        0.37289381,
-        0.37120706,
-        0.36953048,
-        0.36785806,
-        0.36619437,
-        0.36453058,
-        0.36287578,
-        0.36122213,
-        0.3595694,
-        0.35791947,
-        0.35626871,
-        0.35462432,
-        0.35297322,
-        0.35132475,
-        0.34967192,
-        0.34801847,
-        0.34632388,
-        0.34469832,
-        0.34302883,
-        0.34135635,
-        0.33967694,
-        0.33799013,
-        0.33629606,
-        0.33459307,
-        0.33287895,
-        0.33115622,
-        0.3294218,
-        0.32767607,
-        0.3259154,
-        0.32414392,
-        0.32235717,
-    ]
-)
-
-print(np.linalg.norm(xtunes - xtunes_expected))
-print(np.linalg.norm(ytunes - ytunes_expected))
+print(np.linalg.norm(xtunes1 - xtunes2))
+print(np.linalg.norm(ytunes1 - ytunes2))
