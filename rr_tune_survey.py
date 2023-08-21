@@ -53,6 +53,8 @@ def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
     k2lodd = kxl_values.get('k2l_odd', 0)
     k3leven = kxl_values.get('k3l_even', 0)
     k3lodd = kxl_values.get('k3l_odd', 0)
+    k4leven = kxl_values.get('k4l_even', 0)
+    k4lodd = kxl_values.get('k4l_odd', 0)
 
     header = ""
     header = header + "VALUEFOR_K1L_EVEN := {:22g}\n".format(k1leven)
@@ -63,6 +65,9 @@ def get_rr_lattice_for_opt(RR_template, RR_line, kxl_values):
 
     header = header + "VALUEFOR_K3L_EVEN := {:22g}\n".format(k3leven)
     header = header + "VALUEFOR_K3L_ODD := {:22g}\n".format(k3lodd)
+
+    header = header + "VALUEFOR_K4L_EVEN := {:22g}\n".format(k4leven)
+    header = header + "VALUEFOR_K4L_ODD := {:22g}\n".format(k4lodd)
 
     rr_full = header+template
 
