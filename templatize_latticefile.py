@@ -32,12 +32,13 @@ skipthese = ['MPS100AU', 'MPS104BU', 'MPS106AU', 'MPS106BU', 'MPS108AU', 'MPS216
              'MPS611BU', 'MPS613AU', 'MPS615BU', 'MPS617AU', 'MPS617BU', 'MPS619AU', 'MPS623AU', 'MPS623BU', 'MPS625AU', 'MPS625BU', 'MPS639AU', 'MPS639BU', 'MPS641AU',
              'MPS641BU']
 
-intmoms = ['K0L', 'K1L', 'K2L', 'K3L', 'K4L']
+intmoms = ['K0L', 'K1L', 'K2L', 'K3L', 'K4L', 'K5L']
 initial_vals = {'K0L_EVEN':  0.0         , 'K0L_ODD':  0.0          ,
                 'K1L_EVEN':  0.0112332575, 'K1L_ODD': -0.00024562271,
                 'K2L_EVEN': -0.0050223296, 'K2L_ODD': -0.0331316105 ,
                 'K3L_EVEN':  0.1297873   , 'K3L_ODD': -0.2137673    ,
-                'K4L_EVEN':  0.0         , 'K4L_ODD':  0.0          }
+                'K4L_EVEN':  0.0         , 'K4L_ODD':  0.0          ,
+                'K5L_EVEN':  0.0         , 'K5L_ODD':  0.0          }
 
 if __name__ == "__main__":
     # read arguments
@@ -142,12 +143,12 @@ if __name__ == "__main__":
             if parity == 0:
                 # these are even-parity multipoles
                 if debug: print('even parity')
-                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_EVEN, K2L=\5+VALUEFOR_K2L_EVEN, K3L=\6+VALUEFOR_K3L_EVEN, K4L=VALUEFOR_K4L_EVEN")
+                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_EVEN, K2L=\5+VALUEFOR_K2L_EVEN, K3L=\6+VALUEFOR_K3L_EVEN, K4L=VALUEFOR_K4L_EVEN, K5L=VALUEFOR_K5L_EVEN")
                 if debug: print(outline)
                 outfile.write(outline+'\n')
             else:
                 # these are odd-parity multipoles
                 if debug: print('odd parity')
-                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_ODD, K2L=\5+VALUEFOR_K2L_ODD, K3L=\6+VALUEFOR_K3L_ODD, K4L=VALUEFOR_K4L_ODD")
+                outline = mo.expand(r"MPS\1\2U: \3, K1L=\4+VALUEFOR_K1L_ODD, K2L=\5+VALUEFOR_K2L_ODD, K3L=\6+VALUEFOR_K3L_ODD, K4L=VALUEFOR_K4L_ODD, K5L=VALUEFOR_K5L_ODD")
                 if debug: print(outline)
                 outfile.write(outline+'\n')
