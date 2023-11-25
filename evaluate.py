@@ -10,6 +10,8 @@ import tune_suite
 import h5py
 import numpy as np
 
+DEBUG=False
+
 RR_template_file = "RR2020V0922_TEMPLATE_fixed"
 #RR_template_file = "RR2020V0922FLAT_fixed"
 RR_ring_name = "ring605_fodo"
@@ -27,7 +29,7 @@ RR_ring_name = "ring605_fodo"
 
 #----------------------------------------------------------------------
 
-def generate_lattice(kxl_values):
+def generate_lattice(kxl_values, adjust_tunes=True):
     lattice = rr_tune_survey.get_rr_lattice_for_opt(RR_template_file, RR_ring_name, kxl_values)
 
     #  replacing old rr_setup.setup() do-it-all,
@@ -47,7 +49,7 @@ def generate_lattice(kxl_values):
 
     print('generate_lattice, initial xtune: ', xtune, ', ytune: ', ytune)
 
-    if opts.xtune_adjust or opts.ytune_adjust:
+    if adjust_tunes and (opts.xtune_adjust or opts.ytune_adjust):
         print("Adjusting tunes to:")
         print("xtune: ", opts.xtune_adjust)
         print("ytune: ", opts.ytune_adjust)
@@ -65,6 +67,9 @@ def generate_lattice(kxl_values):
 
         rrnova_qt60x.adjust_rr60_trim_quads(lattice_tmp2, delta_xtune, delta_ytune)
 
+    else:
+        print('skipping tune adjustment')
+    
     lattice_tmp2.set_all_string_attribute("extractor_type", "libff")
 
     harmno = 588 # harmonic number
@@ -110,27 +115,48 @@ def analyze_propagation():
 
 #----------------------------------------------------------------------
 
-def evaluate(kxl_values, chatty=False):
+def evaluate(kxl_values, chatty=False, adjust_tunes=True):
 
-    lattice = generate_lattice(kxl_values)
-    
+    try:
+        lattice = generate_lattice(kxl_values, adjust_tunes=adjust_tunes)
+    except:
+        if DEBUG:
+            print("exception generated from generate_lattice")
+            print("kxl_values: ", kxl_values, flush=True)
+        return None
+
     if chatty:
         print("read lattice, ", len(lattice.get_elements()), ", length: ", lattice.get_length())
 
         save_lattice_txt(lattice, 'rr_lattice.out')
 
-        (nux, nuy, cdT) = synergia.simulation.Lattice_simulator.calculate_tune_and_cdt(lattice)
-        print('tune x: ', nux)
-        print('tune y: ', nuy)
-        print('cdT: ', cdT)
-        print('T: ', cdT/synergia.foundation.pconstants.c)
+        try:
+            (nux, nuy, cdT) = synergia.simulation.Lattice_simulator.calculate_tune_and_cdt(lattice)
+        except:
+            if DEBUG:
+                print("exception generated from calculate_tunes_and_cdt")
+                print("kxl_values: ", kxl_values, flush=True)
+            return None
 
-        chrom_t = synergia.simulation.Lattice_simulator.get_chromaticities(lattice)
+        if chatty:
+            print('tune x: ', nux)
+            print('tune y: ', nuy)
+            print('cdT: ', cdT)
+            print('T: ', cdT/synergia.foundation.pconstants.c)
 
-        print('horizontal chromaticity: ', chrom_t.horizontal_chromaticity)
-        print('vertical chromaticity: ', chrom_t.vertical_chromaticity)
-        print('compaction factor: ', chrom_t.momentum_compaction)
-        print('slip factor: ', chrom_t.slip_factor)
+        try:
+            chrom_t = synergia.simulation.Lattice_simulator.get_chromaticities(lattice)
+        except:
+            if DEBUG:
+                print("exception generated from calculate_get_chromaticities")
+                print("kxl_values: ", kxl_values, flush=True)
+            return None
+
+        if chatty:
+            print('horizontal chromaticity: ', chrom_t.horizontal_chromaticity)
+            print('vertical chromaticity: ', chrom_t.vertical_chromaticity)
+            print('compaction factor: ', chrom_t.momentum_compaction)
+            print('slip factor: ', chrom_t.slip_factor)
 
     run_particles(lattice)
 
