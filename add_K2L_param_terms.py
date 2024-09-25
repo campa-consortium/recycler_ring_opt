@@ -67,7 +67,7 @@ if __name__ == "__main__":
             if lastlinewascomment:
                 lastlinewascomment = False
                 print (line)
-                # Write out the new lines we want to add.
+                # Write out the new lines we want to add, right after the end of the comments.
                 for EOI, offsetname in K2Loffset_by_element_of_interest.items():
                     outfile.write(f'{offsetname}:= 0.0\n')
                 # And THEN write out this line we're on.
@@ -77,10 +77,12 @@ if __name__ == "__main__":
                 lineparts = line.split(',')
                 elementname = lineparts[0].split(': ')[0]
                 newparts = []
-                for part in lineparts:
+                for i_part, part in enumerate(lineparts):
                     # Pass through all the non-K2L 
                     if part.count('K2L=')==0:
-                        newparts.append(part)
+                        comma = ''
+                        if i_part < (len(lineparts)-1): comma = ','
+                        newparts.append(part+comma)
                         continue
                     # Otherwise, add in our little offset term
                     # JMSJ catch the case like K2L=0.9 which do not have an operator at the front of the numerical expression!
@@ -89,6 +91,7 @@ if __name__ == "__main__":
                     else: operator = ''
                     newpart = part.replace('K2L=', f'K2L={K2Loffset_by_element_of_interest[elementname]}{operator}')
                     print (f'Created new part {newpart}')
+                    if i_part < (len(lineparts)-1): newpart=newpart+','
                     newparts.append(newpart)
             
                 outfile.write(''.join(newparts))
