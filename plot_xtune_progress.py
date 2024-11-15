@@ -40,64 +40,78 @@ for int_i, intmom in IntMoms.items():
         if this_max > minmaxdict[mom_order]['max']: minmaxdict[mom_order]['max'] = this_max
 
 # Loop over iterations, making plots
+show_params_and_sumsqerr = False # three little subplots at the top
 max_iterations = 60
 sumsq_history = np.empty(0)
-for i, fvec in enumerate(allF[:max_iterations+1]):
+for i, fvec in enumerate(allF[max_iterations:max_iterations+1]):
+    i += max_iterations # FIXME don't leave this hack in place
     print (f'i: {i}')
-    fig = plt.figure(figsize=(8.9,6.4))
-    (subfigs_up, subfig_main) = fig.subfigures(2, 1, wspace=0.5, height_ratios=[1., 2.2]) # 2 rows different heights, 1 col
-    axmom_k2l, axmom_k3l, ax_overall = subfigs_up.subplots(1, 3, width_ratios=[1.,1.,1.]) # 1 row, unequal columns
-
-    axmom_dict = {'K2L':axmom_k2l, 'K3L':axmom_k3l}
-    # Plot the integrated moments up to the current iteration.
-    ax_mom = None
-    for int_i, intmom in IntMoms.items():
-        mom_order = intmom[:-2] # 'K2L', 'K3L', etc.
-        ax_mom = axmom_dict[mom_order]
-        ax_mom.plot(range(i+1), allX.transpose()[int_i][:i+1], label=intmom)
-
-    # Tidy up the axes
-    for intmom, ax_mom in axmom_dict.items():
-        ax_mom.set_ylim(minmaxdict[intmom]['min'], minmaxdict[intmom]['max'])
-        if intmom=='K2L': ax_mom.set_ylim(-0.002,+0.002)
-        ax_mom.set_xlim(0, max_iterations+1)
-        ax_mom.set_xticks(np.arange(0, max_iterations+1, step=10))
-        ax_mom.set_title(f'{Jargon_dict[intmom]} Offsets')
-        ax_mom.set_xlabel('Iteration', fontsize=16)
-        ax_mom.legend()
-    
-    # Plot the overall performance
     to_plot = fvec + np.hstack((xtunes_target, ytunes_target))
-    init_plot = allF[0]+ np.hstack((xtunes_target, ytunes_target))
-    sumsq_x = np.sum(np.square(xtunes_target - to_plot[:41]))
-    sumsq_y = np.sum(np.square(ytunes_target - to_plot[41:]))
-    sumsq = sumsq_x+sumsq_y
-    sumsq_history = np.append(sumsq_history, sumsq)
-    ax_overall.plot(range(i+1), sumsq_history, color='green')
-    ax_overall.set_title('Sum Squared Error')
-    ax_overall.set_yscale('log')
-    ax_overall.set_ylim(1e-5, 5e-3)
-    ax_overall.set_xlim(0, max_iterations+1)
-    ax_overall.set_xticks(np.arange(0, max_iterations+1, step=10))
-    ax_overall.set_xlabel('Iteration', fontsize=16)
+    
+    fig = plt.figure(figsize=(8.9,6.4))
+    if show_params_and_sumsqerr:
+        (subfigs_up, subfig_main) = fig.subfigures(2, 1, wspace=0.5, height_ratios=[1., 2.2]) # 2 rows different heights, 1 col
+        axmom_k2l, axmom_k3l, ax_overall = subfigs_up.subplots(1, 3, width_ratios=[1.,1.,1.]) # 1 row, unequal columns
+
+        axmom_dict = {'K2L':axmom_k2l, 'K3L':axmom_k3l}
+        # Plot the integrated moments up to the current iteration.
+        ax_mom = None
+        for int_i, intmom in IntMoms.items():
+            mom_order = intmom[:-2] # 'K2L', 'K3L', etc.
+            ax_mom = axmom_dict[mom_order]
+            ax_mom.plot(range(i+1), allX.transpose()[int_i][:i+1], label=intmom)
+
+        # Tidy up the axes
+        for intmom, ax_mom in axmom_dict.items():
+            ax_mom.set_ylim(minmaxdict[intmom]['min'], minmaxdict[intmom]['max'])
+            if intmom=='K2L': ax_mom.set_ylim(-0.002,+0.002)
+            ax_mom.set_xlim(0, max_iterations+1)
+            ax_mom.set_xticks(np.arange(0, max_iterations+1, step=10))
+            ax_mom.set_title(f'{Jargon_dict[intmom]} Offsets')
+            ax_mom.set_xlabel('Iteration', fontsize=16)
+            ax_mom.legend()
+
+        # Plot the overall performance
+        sumsq_x = np.sum(np.square(xtunes_target - to_plot[:41]))
+        sumsq_y = np.sum(np.square(ytunes_target - to_plot[41:]))
+        sumsq = sumsq_x+sumsq_y
+        sumsq_history = np.append(sumsq_history, sumsq)
+        ax_overall.plot(range(i+1), sumsq_history, color='green')
+        ax_overall.set_title('Sum Squared Error')
+        ax_overall.set_yscale('log')
+        ax_overall.set_ylim(1e-5, 5e-3)
+        ax_overall.set_xlim(0, max_iterations+1)
+        ax_overall.set_xticks(np.arange(0, max_iterations+1, step=10))
+        ax_overall.set_xlabel('Iteration', fontsize=16)
+
+    else:
+        subfig_main = fig
+        params = {'legend.fontsize': 'x-large',
+                  'axes.labelsize': '24',
+                  'axes.titlesize':'20',
+                  'xtick.labelsize':'22',
+                  'ytick.labelsize':'22'}
+        plt.rcParams.update(params)
 
     # Plot the resulting chromaticity scan
     axs_main = subfig_main.subplots(1, 1)
+    init_plot = allF[0]+ np.hstack((xtunes_target, ytunes_target))
     dp_o_p_scaler = 2.17667526e-6
     dp_o_p = Vals[:, 0] * dp_o_p_scaler
-    axs_main.scatter(dp_o_p, Vals[:, 1]    , color='orange', label="target xtune"   , marker='+'            )
+    axs_main.scatter(dp_o_p, Vals[:, 1]    , color='orange', label="measured xtune"   , marker='o'            )
     axs_main.plot   (dp_o_p, init_plot[:41], color='orange', label="initial xtune"  , linestyle='dotted'    )
     axs_main.plot   (dp_o_p, to_plot[:41]  , color='orange', label="simulated xtune", markerfacecolor='none')
-    axs_main.scatter(dp_o_p, Vals[:, 2]    , color='blue'  , label="target ytune"   , marker='+'            )
+    axs_main.scatter(dp_o_p, Vals[:, 2]    , color='blue'  , label="measured ytune"   , marker='o'            )
     axs_main.plot   (dp_o_p, init_plot[41:], color='blue'  , label="initial ytune"  , linestyle='dotted'    )
     axs_main.plot   (dp_o_p, to_plot[41:]  , color='blue'  , label="simulated ytune", markerfacecolor='none')
-    plt.ylabel('Resonant tune', fontsize=16)
+    plt.ylabel('Resonant tune')
     axs_main.set_ylim(0.31,0.46)
-    plt.xlabel(r'Fractional Momentum Offset [$\frac{dp}{p}$]', fontsize=16)
+    plt.xlabel(r'Fractional Momentum Offset [$\frac{dp}{p}$]')
     axs_main.legend()
-    plt.title("POUNDERS Iteration: " + str(i), y=0.94, fontsize=14)
+    plt.title("POUNDERS Iteration: " + str(i), y=0.93)
     plt.tight_layout()
-    subfigs_up.subplots_adjust(bottom=0.30, top=0.80, hspace=0.2)
+
+    if show_params_and_sumsqerr: subfigs_up.subplots_adjust(bottom=0.30, top=0.80, hspace=0.2)
     
     plt.savefig(os.path.join(plot_dir, "Eval_" + str(i) + ".png"), dpi=200, bbox_inches="tight")
     plt.close()
