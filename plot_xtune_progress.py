@@ -98,6 +98,10 @@ for i, fvec in enumerate(allF[max_iterations:max_iterations+1]):
     init_plot = allF[0]+ np.hstack((xtunes_target, ytunes_target))
     dp_o_p_scaler = 2.17667526e-6
     dp_o_p = Vals[:, 0] * dp_o_p_scaler
+    axs_main.scatter(dp_o_p, Vals[:, 1]    , color='black', label="measured tunes"   , marker='o'            )
+    axs_main.plot   (dp_o_p, init_plot[:41], color='black', label="initial tunes"  , linestyle='dotted'    )
+    axs_main.plot   (dp_o_p, to_plot[:41]  , color='black', label="after POUNDERS", markerfacecolor='none')
+    axs_main.legend(loc='lower left', fontsize=20 )
     axs_main.scatter(dp_o_p, Vals[:, 1]    , color='orange', label="measured xtune"   , marker='o'            )
     axs_main.plot   (dp_o_p, init_plot[:41], color='orange', label="initial xtune"  , linestyle='dotted'    )
     axs_main.plot   (dp_o_p, to_plot[:41]  , color='orange', label="simulated xtune", markerfacecolor='none')
@@ -107,10 +111,11 @@ for i, fvec in enumerate(allF[max_iterations:max_iterations+1]):
     plt.ylabel('Resonant tune')
     axs_main.set_ylim(0.31,0.46)
     plt.xlabel(r'Fractional Momentum Offset [$\frac{dp}{p}$]')
-    axs_main.legend()
     plt.title("POUNDERS Iteration: " + str(i), y=0.93)
     plt.tight_layout()
-
+    plt.text(x=0, y=0.42, s='horizontal', color='orange', fontsize=24)
+    plt.text(x=0, y=0.36, s='vertical',   color='blue',   fontsize=24)
+    
     if show_params_and_sumsqerr: subfigs_up.subplots_adjust(bottom=0.30, top=0.80, hspace=0.2)
     
     plt.savefig(os.path.join(plot_dir, "Eval_" + str(i) + ".png"), dpi=200, bbox_inches="tight")
