@@ -8,13 +8,11 @@ import sys
 import numpy as np
 import synergia
 import synergia.simulation as SIM
+MT = synergia.lattice.marker_type
+ET = synergia.lattice.element_type
 
 import rr_sextupoles
 import rrnova_qt60x
-
-#from rr_options import opts
-
-#####################################
 
 
 # quick and dirty twiss parameter calculator from 2x2 courant-snyder map array
@@ -96,30 +94,59 @@ def reorder_lattice(lattice, start_element=None):
 
 #----------------------------------------------------------------------------------
 
+#
+#From: Eric G Stern
+#Sent: Tuesday, February 18, 2025 11:25 AM
+#To: Cristhian E. Gonzalez-Ortiz
+#Cc: Jason Michael St.John
+#Subject: RE: RF cavity settings for TBT BPM data 
+#
+#Thanks! In the lattice file would that be the first RFCAV53MHz element in line HC607?
+# 
+#    Eric
+# 
+#From: Cristhian E. Gonzalez-Ortiz <gonza839@fnal.gov>
+#Sent: Tuesday, February 18, 2025 11:18 AM
+#To: Eric G Stern <egstern@fnal.gov>
+#Cc: Jason Michael St.John <stjohn@fnal.gov>
+#Subject: Re: RF cavity settings for TBT BPM data
+# 
+#Hi Eric,
+# 
+#The RF cavity (53 MHz) Station A should be close to 80 kV. I don't recall the specific number, but 80 kV should pretty close.
+ #
+#Best,
+# 
+#Cris
+
 # lattice is input lattice
-# rf_voltage is total RF voltage to distribute over all the cavities
+# rf_voltage is the voltage in GV
 # harmno is the harmonic number
 # modifies elements in lattice in-place
 
 def setup_rf_cavities(lattice, rf_voltage, harmno):
 
-    # rf cavity voltage, is 1.0 MV total distributed over 18 cavities.  MAD8
-    # expects cavities voltages in  units of MV. First count how many cavities
-    # there are
+    # rf cavity voltage, is in GV.
+    # expects cavities voltages in  units of MV.
+
     num_cavities = 0
+    rfcav53mhz = None
+    # First turn off all RF cavities except for one
     for elem in lattice.get_elements():
-        if elem.get_type() == synergia.lattice.element_type.rfcavity:
+        if elem.get_type() == ET.rfcavity:
             num_cavities = num_cavities + 1
+            elem.set_double_attribute("volt", 0.0)
+            elem.set_double_attribute("harmon", harmno)
+            elem.set_double_attribute("freq", 0.0)
+            # is this the first rfcav53mhz (all names or lowercase)
+            if (elem.get_name() == "rfcav53mhz") and (rfcav53mhz is None):
+                rfcav53mhz = elem
+                elem.set_double_attribute("volt", rf_voltage*1.0e3)
 
     if num_cavities < 1:
         raise RuntimeError("error: set_rf_cavities: no RF cavities found")
-
-    # Now set the voltage and harmonic number. Frequency will be set
-    # later when the lattice is "tuned".
-    for elem in lattice.get_elements():
-            # set the harmonic number so the frequency is set
-            elem.set_double_attribute("harmon", harmno)
-            elem.set_double_attribute("volt", rf_voltage/num_cavities)
+    if not rfcav53mhz:
+        raise RuntimeError("error: the 53 MHz RF cavity was not found.")
 
     return
 

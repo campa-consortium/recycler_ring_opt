@@ -5,26 +5,31 @@ import numpy as np
 import re
 
 import synergia
+import synergia.simulation as SIM
 
 import mpi4py.MPI as MPI
 myrank = MPI.COMM_WORLD.rank
 
 import rr_setup
+import rrnova_qt60x
+import rr_sextupoles
 
 lattice_file = '../RR2020V0922FLAT_k2l_template_NoBreaks_K2L_ready'
 RR_line = "ring605_fodo"
 
 RR_xtune = 0.42
 RR_ytune = 0.46
-RR_xchrom = -4.44 # from C. Ortiz-Gonzalez 2025-02-18
-RR_ychrom = -9.1 # from C. Ortiz-Gonzalez 2025-02-18
+RR_chromx = -4.44 # from C. Ortiz-Gonzalez 2025-02-18
+RR_chromy = -9.1 # from C. Ortiz-Gonzalez 2025-02-18
+
+RF_voltage = 80.0e3 * 1.0e-9 # 80 KV
+
 
 #------------------------------------------------------------------------
 
 # Read parameter names here so they are globally available
 with open('sext_names.pickle', 'rb') as f:
     sext_names = pickle.load(f)
-
 
 
 
@@ -64,10 +69,17 @@ def prepare_lattice(params):
                                         RR_xtune-xtune, RR_ytune-ytune)
 
 
-    # set chromaticity
-    rr_setup.set_chromaticity(RR_chromx, RR_chromy):
+    f_sext, d_sext = rr_sextupoles.mark_fd_sextupoles(lattice_org2)
+    print(f'There are {len(f_sext)} focussing sextupoles')
+    print(f'There are {len(d_sext)} defocussing sextupoles')
+    SIM.Lattice_simulator.adjust_chromaticities(lattice_org2, RR_chromx, RR_chromy, 1.0e-6, 20)
 
-    return lattice
+    rr_setup.setup_rf_cavities(lattice_org2, RF_voltage, 84)
+
+    SIM.Lattice_simulator.set_closed_orbit_tolerance(1.0e-6)
+    SIM.Lattice_simulator.tune_circular_lattice(lattice_org2)
+
+    return lattice_org2
 
 #------------------------------------------------------------------------
 
@@ -80,6 +92,23 @@ def run_modes(params):
 
     if myrank == 0:
         print("read lattice, length: ", lattice.get_length(), len(lattice.get_elements()), "elements")
+
+    tunes = SIM.Lattice_simulator.calculate_tune_and_cdt(lattice)
+    xtune = tunes[0]
+    ytune = tunes[1]
+
+    if myrank == 0:
+        print("adjusted xtune: ", xtune)
+        print("adjusted ytune: ", ytune)
+
+    chroms = SIM.Lattice_simulator.get_chromaticities(lattice)
+    xchrom = chroms.horizontal_chromaticity
+    ychrom = chroms.vertical_chromaticity
+
+
+    if myrank == 0:
+        print('adjusted horizontal chromaticity: ', xchrom)
+        print('adjust vertical chromaticity: ', ychrom)
 
     return
 

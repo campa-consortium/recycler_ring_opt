@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import synergia
+MT = synergia.lattice.marker_type
 
 # manipulate the chromaticity RR trim sextupole magnets
 
@@ -85,9 +86,9 @@ SD = [
 ]  # these magnets depend on s633_i
 
 
-# extract focussing and defocussing sextupoles from the lattice
+# Mark focussing and defocussing sextupoles for chromaticity adjustment.
 # return ( [list of focussing], [list of defocussing])
-def get_fd_sextupoles(lattice):
+def mark_fd_sextupoles(lattice):
     f_sext = []
     d_sext = []
     for elem in lattice.get_elements():
@@ -99,10 +100,12 @@ def get_fd_sextupoles(lattice):
             f_sext.append(elem)
             # print "elem in SF"
             in_f = True
+            elem.set_marker(MT.h_chrom_corrector)
         if ename in SD:
             d_sext.append(elem)
             # print "elem in SD"
             in_d = True
+            elem.set_marker(MT.v_chrom_corrector)
         if in_f and in_d:
             print("Error: element %s is in both focussing and defocussing sextupoles" % ename)
 
