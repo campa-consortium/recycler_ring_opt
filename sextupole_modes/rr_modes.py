@@ -24,6 +24,7 @@ RR_chromy = -9.1 # from C. Ortiz-Gonzalez 2025-02-18
 
 RF_voltage = 80.0e3 * 1.0e-9 # 80 KV
 
+turns = 2000
 
 #------------------------------------------------------------------------
 
@@ -83,6 +84,24 @@ def prepare_lattice(params):
 
 #------------------------------------------------------------------------
 
+# for this purpose, we don't need to propagate many particles
+def create_simulator(refpart, kick):
+    macroparticles = 8
+    realparticles = 5e10
+    sim = SIM.Bunch_simulator.create_single_bunch_simulator(refpart, macroparticles, realparticles)
+    # populate the bunch. Particle 0 stays as 0, particle 1 has kick in px
+    # particle 2 has kick in py.
+    bunch = sim.get_bunch(0, 0)
+    bunch.checkout_particles()
+    local_particles = bunch.get_particles_numpy()
+    local_particles[:, 0:6] = 0.0
+    local_particles[1, 1] = kick
+    local_particles[2, 3] = kick
+    bunch.checkin_particles()
+    return sim
+
+#------------------------------------------------------------------------
+
 # run modes with the parameters given as a dict with element names as keys with the multipole offset as the value
 def run_modes(params):
 
@@ -110,7 +129,48 @@ def run_modes(params):
         print('adjusted horizontal chromaticity: ', xchrom)
         print('adjust vertical chromaticity: ', ychrom)
 
+    # create the bunch simulator with the initial kick
+    sim = create_simulator(lattice.get_reference_particle(), kick = 0.001)
+
+    # register the diagnostics. I'll try to go with bulk track for 4 particles
+    register_diagnostics(sim, lattice)
+
+    # Stepper and propagator.
+    # For these sextupole modes I don't need space charge at the moment
+    propagator = get_propagator(lattice)
+
+    simlog = synergia.utils.parallel_utils.Logger(0, 
+            synergia.utils.parallel_utils.LoggerV.INFO_TURN)
+
+    propagator.propagate(sim, simlog, turns)
+
     return
+
+    return
+
+#------------------------------------------------------------------------
+
+def register_diagnostics(sim, lattice):
+    # Go through the lattice and register a diagnostic for each
+    # BPM device which are (H|P)[1-6][0-9][0-9] monitors/instruments
+    bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
+    for elem in lattice.get_elements():
+        et = elem.get_type()
+        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
+            ename = elem.get_name()
+            mo = bpm_patt.fullmatch(ename)
+            if mo:
+                diag = synergia.bunch.Diagnostics_bulk_track(f'BPM_{ename}.h5', 4)
+                sim.reg_diag_at_elem(diag, elem)
+
+#------------------------------------------------------------------------
+
+# Stepper and propagator.
+# For these sextupole modes I don't need space charge at the moment
+def get_propagator(lattice):
+    stepper = SIM.Independent_stepper_elements(1)
+    propagator = SIM.Propagator(lattice, stepper)
+    return propagator
 
 #------------------------------------------------------------------------
 
