@@ -6,6 +6,7 @@ import re
 
 import synergia
 import synergia.simulation as SIM
+ET = synergia.lattice.element_type
 
 import mpi4py.MPI as MPI
 myrank = MPI.COMM_WORLD.rank
@@ -23,8 +24,6 @@ RR_chromx = -4.44 # from C. Ortiz-Gonzalez 2025-02-18
 RR_chromy = -9.1 # from C. Ortiz-Gonzalez 2025-02-18
 
 RF_voltage = 80.0e3 * 1.0e-9 # 80 KV
-
-turns = 2000
 
 #------------------------------------------------------------------------
 
@@ -102,8 +101,84 @@ def create_simulator(refpart, kick):
 
 #------------------------------------------------------------------------
 
-# run modes with the parameters given as a dict with element names as keys with the multipole offset as the value
-def run_modes(params):
+# Stepper and propagator.
+# For these sextupole modes I don't need space charge at the moment
+def get_propagator(lattice):
+    stepper = SIM.Independent_stepper_elements(1)
+    propagator = SIM.Propagator(lattice, stepper)
+    return propagator
+
+#------------------------------------------------------------------------
+
+def save_json_lattice(lattice, filename='rr_run_lattice.json'):
+    # save the lattice as run as a json file
+    if myrank == 0:
+        f = open(filename, 'w')
+        print(lattice.as_json(), file=f)
+        f.close()
+
+#------------------------------------------------------------------------
+
+#------------------------------------------------------------------------
+
+# Find the BPMs, save their names and get the lattice functions
+# at their location.
+
+# Return and save a numpy dict indexed by the BPM name of dict containing
+# alpha_x beta_x alpha_y beta_y.
+
+def get_BPMs_and_lattice_functions(lattice):
+    BPM_list = {}
+    SIM.Lattice_simulator.CourantSnyderLatticeFunctions(lattice)
+    SIM.Lattice_simulator.calc_dispersions(lattice)
+    # search through lattice
+    # Go through the lattice and register a diagnostic for each
+    # BPM device which are (H|P)[1-6][0-9][0-9] monitors/instruments
+    bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
+    for elem in lattice.get_elements():
+        et = elem.get_type()
+        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
+            ename = elem.get_name()
+            mo = bpm_patt.fullmatch(ename)
+            if mo:
+                bpm_name = elem.get_name()
+                BPM_entry = {}
+                BPM_entry['beta_x'] = elem.lf.beta.hor
+                BPM_entry['alpha_x'] = elem.lf.alpha.hor
+                BPM_entry['psi_x'] = elem.lf.psi.hor
+                BPM_entry['beta_y'] = elem.lf.beta.ver
+                BPM_entry['alpha_y'] = elem.lf.alpha.ver
+                BPM_entry['psi_y'] = elem.lf.psi.ver
+                BPM_list[bpm_name] = BPM_entry
+
+    np.save('BPM_info.npy', BPM_list)
+
+
+#------------------------------------------------------------------------
+
+
+def register_diagnostics(sim, lattice):
+    # Go through the lattice and register a diagnostic for each
+    # BPM device which are (H|P)[1-6][0-9][0-9] monitors/instruments
+    bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
+    for elem in lattice.get_elements():
+        et = elem.get_type()
+        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
+            ename = elem.get_name()
+            mo = bpm_patt.fullmatch(ename)
+            if mo:
+                diag = synergia.bunch.Diagnostics_bulk_track(f'BPM_{ename}.h5', 4)
+                sim.reg_diag_at_element(diag, elem)
+
+#------------------------------------------------------------------------
+
+# run modes with the parameters given as a dict with element names as keys with the multipole offset as the value. For example:
+
+# params = {}
+# params['MPS109AD'] = -99.0
+# params['MP100AS'] = 3.14159
+
+def run_modes(params, turns=2048):
 
     # start with getting the lattice set up to use the requested
     # settings.
@@ -129,6 +204,13 @@ def run_modes(params):
         print('adjusted horizontal chromaticity: ', xchrom)
         print('adjust vertical chromaticity: ', ychrom)
 
+
+    # Save the lattice as it will be run
+    save_json_lattice(lattice)
+
+    # Save the list of BPMS
+    BPM_list = get_BPMs_and_lattice_functions(lattice)
+
     # create the bunch simulator with the initial kick
     sim = create_simulator(lattice.get_reference_particle(), kick = 0.001)
 
@@ -147,30 +229,6 @@ def run_modes(params):
     return
 
     return
-
-#------------------------------------------------------------------------
-
-def register_diagnostics(sim, lattice):
-    # Go through the lattice and register a diagnostic for each
-    # BPM device which are (H|P)[1-6][0-9][0-9] monitors/instruments
-    bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
-    for elem in lattice.get_elements():
-        et = elem.get_type()
-        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
-            ename = elem.get_name()
-            mo = bpm_patt.fullmatch(ename)
-            if mo:
-                diag = synergia.bunch.Diagnostics_bulk_track(f'BPM_{ename}.h5', 4)
-                sim.reg_diag_at_elem(diag, elem)
-
-#------------------------------------------------------------------------
-
-# Stepper and propagator.
-# For these sextupole modes I don't need space charge at the moment
-def get_propagator(lattice):
-    stepper = SIM.Independent_stepper_elements(1)
-    propagator = SIM.Propagator(lattice, stepper)
-    return propagator
 
 #------------------------------------------------------------------------
 
