@@ -134,10 +134,14 @@ def get_BPMs_and_lattice_functions(lattice):
     # search through lattice
     # Go through the lattice and register a diagnostic for each
     # BPM device which are (H|P)[1-6][0-9][0-9] monitors/instruments
+    #
+    # The BPMs are apparently the hmonitor or vmonitor elements, since
+    # there are exactly 104 of each. I don't know what the elements marked as
+    # instruments are.
     bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
     for elem in lattice.get_elements():
         et = elem.get_type()
-        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
+        if (et == ET.hmonitor) or (et == ET.vmonitor):
             ename = elem.get_name()
             mo = bpm_patt.fullmatch(ename)
             if mo:
@@ -163,7 +167,7 @@ def register_diagnostics(sim, lattice):
     bpm_patt =  re.compile('(h|v)p[1-6][0-9][0-9]')
     for elem in lattice.get_elements():
         et = elem.get_type()
-        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
+        if (et == ET.hmonitor) or (et == ET.vmonitor):
             ename = elem.get_name()
             mo = bpm_patt.fullmatch(ename)
             if mo:

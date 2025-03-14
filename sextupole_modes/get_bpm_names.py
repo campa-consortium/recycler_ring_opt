@@ -31,25 +31,36 @@ def get_lattice(lattice_file, lattice_line):
 def main():
     lattice = get_lattice(lattice_file, RR_line)
 
+    bpm_h_inst = []
+    bpm_h_monitor = []
+    bpm_v_inst = []
+    bpm_v_monitor = []
+
     # Loop getting all elements with the proper name
     bpm_nm_patt = '(h|v)p[1-6][0-9][0-9]'
     pat = re.compile(bpm_nm_patt)
 
     for elem in lattice.get_elements():
         et = elem.get_type()
+        ename = elem.get_name()
         #print(et, ': ', end='')
-        if (et == ET.hmonitor) or (et == ET.vmonitor) or (et == ET.instrument):
-            print('found candidate: ', elem, end='')
-            ename = elem.get_name()
-            mo = pat.fullmatch(ename)
-            if mo:
-                print(elem, 'matched')
-            else:
-                print()
-        # else:
-        #     print()
+        if (et == ET.hmonitor) and pat.fullmatch(ename):
+            bpm_h_monitor.append(elem)
+        elif (et == ET.vmonitor) and pat.fullmatch(ename):
+            bpm_v_monitor.append(elem)
+        elif (et == ET.instrument) and pat.fullmatch(ename):
+            if ename[0] == 'h':
+                bpm_h_inst.append(elem)
+            elif ename[0] == 'v':
+                bpm_v_inst.append(elem)
+
+    print(f'{len(bpm_h_monitor)} H monitors')
+    print(f'{len(bpm_h_inst)} H instruments')
+    print(f'{len(bpm_v_monitor)} V monitors')
+    print(f'{len(bpm_v_inst)} V instruments')
 
     return
 
 if __name__ == "__main__":
     main()
+
