@@ -1,0 +1,135 @@
+From:	Cristhian E. Gonzalez-Ortiz
+Sent:	Wednesday, February 19, 2025 9:53 AM
+To:	Eric G Stern
+Subject:	Re: RF cavity settings for TBT BPM data
+
+Hey Eric,
+
+I found a snippet of code used to set the chromaticity in some previous synergia 
+simulations. I think this should give you an idea on the chromatic sextupole families. Let 
+me know if this helps.
+
+# Manipulate the chromaticity RR trim sextupole magnets
+
+# In the lattice file, the sextupole currents are set by two
+# parameters SF_I for "focussing" sextupole currents and SD_I
+# for "defocussing" sextupole currents.  In turn, these are fanned
+# out to other parametrized currents:
+
+# Focussing:
+focussing_currents = ["s112_i", "s128_i", "s330_i", "s412_i",
+                      "s428_i", "s630_i"]
+defocussing_currents = ["s111_i", "s113_i", "s119_i", "s207_i",
+                        "s411_i", "s413_i", "s419_i", "s507_i",
+                        "s633_i"]
+
+# S331_I is set to 0 because this magnets aren't installed 
+meiqin@fnal.gov 2014-09-10
+
+# list of focussing sextupoles
+SF = ["s112", "s114", "s116", "s118",  # these magnets depend on s112_i
+      "s128", "s130", "s202", "s204",  # these magnets depend on s128_i
+      "s330", "s332", "s334", "s336",  # these magnets depend on s330_i
+      "s412", "s414", "s416", "s418",  # these magnets depend on s412_i
+      "s428", "s430", "s502", "s504",  # these magnets depend on s428_i
+      #"s630", "s632", "s634", "s636"]  # these magnets depend on s630_i
+      "s634", "s636"]  # these magnets depend on s630_i
+
+# list of defocussing sextupoles
+SD = ["s111", # this magnet depends on s111_i
+      "s113", "s115", "s117",  # these magnets depend on s113_i
+      "s119", "s121", "s123", "s125", "s127", "s129", # these magnets 
+depend on s119_i
+      "s203", "s205", "s207", "s209", "s211", "s213", # these magnets 
+depend on s207_i
+      # "s331", "s333", these magnets depend on s331_i which is set to 0
+      "s411", # this magnet depends on s411_i
+      "s413", "s415", "s417",  # these magnets depend on s413_i
+      "s419", "s421", "s423", "s425", "s427", "s429", # these magnets 
+depend on s419_i
+      "s501", "s503", "s507", "s509", "s511", "s513", # these magnets 
+depend on s507_i
+      "s633", "s635"]  # these magnets depend on s633_i
+
+
+
+ 
+From: Eric G Stern 
+Sent: Tuesday, February 18, 2025 12:15 PM 
+To: Cristhian E. Gonzalez-Ortiz 
+Cc: Jason Michael St.John 
+Subject: RE: RF cavity settings for TBT BPM data 
+
+Thanks. I had another question. The elog had this console display
+ 
+ 
+ 
+Are these the values at two separate times as indicated by the T-sec column? I guess Q.h and Q.v 
+are tunes but what is dQ.h and dQ.v? Jason seems to think that the chromaticies are like -5.8 and -
+7.8 so I don’t know what values like -.0014 mean.
+ 
+    Eric
+ 
+From: Cristhian E. Gonzalez-Ortiz <gonza839@fnal.gov> 
+Sent: Tuesday, February 18, 2025 12:03 PM 
+To: Eric G Stern <egstern@fnal.gov> 
+Subject: Re: RF cavity settings for TBT BPM data
+ 
+Yes, that's the one!
+ 
+ 
+ 
+From: Eric G Stern 
+Sent: Tuesday, February 18, 2025 11:25 AM 
+To: Cristhian E. Gonzalez-Ortiz 
+Cc: Jason Michael St.John 
+Subject: RE: RF cavity settings for TBT BPM data
+ 
+Thanks! In the lattice file would that be the first RFCAV53MHz element in line HC607?
+ 
+    Eric
+ 
+From: Cristhian E. Gonzalez-Ortiz <gonza839@fnal.gov> 
+Sent: Tuesday, February 18, 2025 11:18 AM 
+To: Eric G Stern <egstern@fnal.gov> 
+Cc: Jason Michael St.John <stjohn@fnal.gov> 
+Subject: Re: RF cavity settings for TBT BPM data
+ 
+Hi Eric,
+ 
+The RF cavity (53 MHz) Station A should be close to 80 kV. I don't recall the specific 
+number, but 80 kV should pretty close.
+ 
+Best,
+ 
+Cris
+ 
+ 
+ 
+ 
+From: Eric G Stern 
+Sent: Tuesday, February 18, 2025 11:02 AM 
+To: Cristhian E. Gonzalez-Ortiz 
+Cc: Jason Michael St.John 
+Subject: RF cavity settings for TBT BPM data
+ 
+Hi Cris,
+ 
+I’m working with Jason St. John to simulate the turn-by-turn bpm data like you took on 2024-07-09.
+Elog | Home
+ 
+Do you recall or is it recorded what the RF cavity voltages were during that run?
+ 
+    Thanks,
+    Eric
+ 
+--
+Eric G. Stern  
+Group Leader, Accelerator Simulations (AS) Group  
+ 
+Data Science, Simulation, and Learning Division  
+Fermi National Accelerator Laboratory  
+630 840 4747 (office)  
+www.fnal.gov  
+egstern@fnal.gov
+ 
