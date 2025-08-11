@@ -32,6 +32,8 @@ nhmon = 0
 nvmon = 0
 nhkick = 0
 nvkick = 0
+ngxxxa = 0
+ngxxxb = 0
 
 print('s:name:type:length', file=rrout)
 for elem in lattice.get_elements():
@@ -61,6 +63,11 @@ for elem in lattice.get_elements():
     elif re.fullmatch('vp[1-6][0-9][0-9]', ename) and etype == ET.vmonitor:
         found = True
         nvmon = nvmon + 1
+    # is this a sbend GxxxA magnet?
+    elif re.fullmatch('g[1-6][0-9][0-9]A', ename) and etype == ET.sbend:
+        ngxxxa = ngxxxa + 1
+    elif re.fullmatch('g[1-6][0-9][0-9]A', ename) and etype == ET.sbend:
+        ngxxxb = ngxxxb + 1
 
     if found:
         print(f'{s}:{elem.get_name()}:{elem.get_type_name()}:{elem.get_length()}', file=rrout)
@@ -72,7 +79,8 @@ print('nhmon: ', nhmon)
 print('nvmon: ', nvmon)
 print('nhkick: ', nhkick)
 print('nvkick: ', nvkick)
-      
+print('ngxxxA: ', ngxxxa)
+print('ngxxxB: ', ngxxxb)
 
 rrout.close()
 
