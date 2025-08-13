@@ -1,0 +1,5 @@
+#!/bin/sh
+#synergia_workflow_submitter:/bin/sh
+cd @@jobdir@@ && \
+(time OMP_PROC_BIND=spread OMP_PLACES=cores OMP_OMP_NUM_THREADS=4 python @@script@@ @@args@@ 1> synergia.out 2> synergia.err; \
+echo "synergia finished with exit status $?")

@@ -15,6 +15,8 @@ import rr_setup
 import rrnova_qt60x
 import rr_sextupoles
 
+from three_bump import Three_bump
+
 lattice_file = '../RR2020V0922FLAT_k2l_template_NoBreaks_K2L_ready'
 RR_line = "ring605_fodo"
 
@@ -182,7 +184,7 @@ def register_diagnostics(sim, lattice):
 # params['MPS109AD'] = -99.0
 # params['MP100AS'] = 3.14159
 
-def run_modes(params, turns=2048):
+def run_modes(params, turns=2048, correctors=None, target=None, offset=None):
 
     # start with getting the lattice set up to use the requested
     # settings.
@@ -208,6 +210,11 @@ def run_modes(params, turns=2048):
         print('adjusted horizontal chromaticity: ', xchrom)
         print('adjust vertical chromaticity: ', ychrom)
 
+
+    if correctors is not None and target is not None and offset is not None:
+        bumpobj = Three_bump(lattice, correctors[0], correctors[2], correctors, None, target, True)
+
+        corr_values = bumpobj.set_bump((offset, None))
 
     # Save the lattice as it will be run
     save_json_lattice(lattice)
@@ -246,13 +253,15 @@ def main():
     for mn in sext_names:
         default_params[mn] = 0.0
 
+    default_params['MPS212AU'] = 0.5
     # test some settings
     # default_params['MPS109AD'] = -99.0
     # default_params['MP100AS'] = 3.14159
     # yes setting these parameters modifies the lattice
 
     # run it
-    run_modes(default_params)
+    run_modes(default_params, correctors=('h210', 'h212', 'h214'),
+              target='hp212', offset=0.005)
 
 
 #------------------------------------------------------------------------
